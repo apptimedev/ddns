@@ -1,2 +1,2 @@
 # ddns
-Google Dynamic IP Update
+Google Domains Dynamic IP with Python and Docker

@@ -5,25 +5,29 @@ import time
 class DDNS():
     first = True
     domains = []
-    userpss = ''
     ipr = 'https://domains.google.com/checkip'
+    dip = 'domains.google.com'
     iptime = 3600
 
     currentip = requests.get(ipr).text
     myip = currentip
 
-    def set_domain(self, domain):
-        self.domains.append(domain)
+    def set_domain(self, domain, user, password):
+        value = {
+            'domain': domain,
+            'user': '%s:%s' % (user, password)
+        }
+        self.domains.append(value)
 
-    def set_userpss(self, user, password):
-        self.userpss = '%s:%s' % (user, password)
+    def set_dip(self, domain):
+        self.dip = domain
 
     def set_time(self, iptime):
         self.iptime = iptime
 
     def init(self):
         print('Starting ddns')
-        if (len(self.domains) > 0) & (self.userpss != ''):
+        if len(self.domains) > 0:
             while True:
                 self.get_ip()
                 self.write()
@@ -42,11 +46,13 @@ class DDNS():
                     time.sleep(self.iptime)
 
     def write(self):
-        for domain in self.domains:
+        for value in self.domains:
+            domain = value['domain']
+            user = value['user']
 
             print('Starting get IP on %s' % domain)
 
-            request = 'https://%s@domains.google.com/nic/update?hostname=%s&myip=%s' % (self.userpss, domain, self.myip)
+            request = 'https://%s@%s/nic/update?hostname=%s&myip=%s' % (user, self.dip, domain, self.myip)
 
             print('Current External IP is %s' % self.myip)
 

@@ -1,18 +1,33 @@
 from ddns import DDNS
 
 ddns = DDNS()
-user = 'youremail@gmail.com'
-password = ''
 domain = 'domain.com'  # domain
-subs = ['sub1', 'sub2', 'sub3']  # sub domains
+subs = [
+    {
+        'domain': 'sub1',
+        'user': 'abc',
+        'password': 'abc'
+    },
+    {
+        'domain': 'sub2',
+        'user': 'abc',
+        'password': 'abc'
+    },
+    {
+        'domain': 'sub3',
+        'user': 'abc',
+        'password': 'abc'
+    }
+]  # sub domains
 iptime = 60  # secs verify
 
-ddns.set_userpss(user, password)
+#  ddns.set_domain(domain, user, password)  # to set domain
 
-ddns.set_domain(domain)  # to set domain
-
-for sub in subs:
-    ddns.set_domain("%s.%s" % (sub, domain))  # to set sub domains
+for value in subs:
+    sub = value['domain']
+    user = value['user']
+    password = value['password']
+    ddns.set_domain(("%s.%s" % (sub, domain)), user, password)  # to set sub domains
 
 ddns.set_time(iptime)
 

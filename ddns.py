@@ -5,12 +5,12 @@ import time
 class DDNS():
     first = True
     domains = []
-    ipr = 'https://domains.google.com/checkip'
+    ipr = 'http://whatismyip.akamai.com/'
     dip = 'domains.google.com'
     iptime = 3600
 
-    currentip = requests.get(ipr).text
-    myip = currentip
+    myip = requests.get(ipr).text
+    lastip = myip
 
     def set_domain(self, domain, user, password):
         value = {
@@ -36,32 +36,33 @@ class DDNS():
 
     def get_ip(self):
         if self.first:
-            print('IP is %s' % self.currentip)
+            print('IP is %s' % self.myip)
             self.first = False
         else:
-            while self.myip == self.currentip:
+            while self.myip == self.lastip:
+                self.lastip = self.myip
                 self.myip = requests.get(self.ipr).text
-                print('IP is %s' % self.myip)
-                if self.myip == self.currentip:
-                    time.sleep(self.iptime)
+                if self.myip != self.lastip:
+                    print('IP is %s' % self.myip)
+                if len(self.myip) > 18:
+                    print('IP error')
+                time.sleep(self.iptime)
+
 
     def write(self):
         for value in self.domains:
             domain = value['domain']
             user = value['user']
 
-            print('Starting get IP on %s' % domain)
-
             request = 'https://%s@%s/nic/update?hostname=%s&myip=%s' % (user, self.dip, domain, self.myip)
 
-            print('Current External IP is %s' % self.myip)
-
             if self.myip != '':
-                print('IP has changed!! Updating on Google Domains')
                 response = requests.get(request).text
                 if response == "good %s" % self.myip:
                     print('Changed IP on %s' % domain)
+                elif response == "nochg %s" % self.myip:
+                    print('No changes on %s' % domain)
                 else:
-                    print("Error: %s" % response)
+                    print("Error on %s:\n%s" % (domain, response))
             else:
                 print('No changes on %s' % domain)

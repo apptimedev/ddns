@@ -2,13 +2,15 @@ import requests
 import time
 import datetime
 
+
 class DDNS():
     iperror = 0
     first = True
     domains = []
-    ipr = 'https://domains.google.com/checkip'
+    ipr1 = 'http://myexternalip.com/raw'
     ipr2 = 'http://whatismyip.akamai.com/'
     ipr3 = 'https://api.ipify.org'
+    ipr4 = 'https://domains.google.com/checkip'
     dip = 'domains.google.com'
     iptime = 3600
 
@@ -30,26 +32,35 @@ class DDNS():
 
     def init(self):
         print('Starting ddns')
-        self.myip = self.request_ip()
-        self.lastip = self.myip
         if len(self.domains) > 0:
             while True:
                 self.get_ip()
                 self.write()
+                if self.first:
+                    self.first = False
         else:
             print('First set fields')
 
     def get_ip(self):
         if self.first:
-            print('\nTime: %s' % datetime.datetime.now())
+            api = self.iperror + 1
+            now = datetime.datetime.now()
+            self.myip = self.request_ip()
+            self.lastip = self.myip
+            print("\nAPI %s" % api)
+            print('Time: %s' % now)
             print('IP is %s' % self.myip)
-            self.first = False
         else:
+            if self.myip != self.lastip:
+                time.sleep(self.iptime)
             while self.myip == self.lastip:
+                api = self.iperror + 1
+                now = datetime.datetime.now()
                 self.lastip = self.myip
                 self.myip = self.request_ip()
-                if self.myip != self.lastip:
-                    print('\nTime: %s' % datetime.datetime.now())
+                if now.minute == 0 or self.myip != self.lastip:
+                    print("\nAPI %s" % api)
+                    print('Time: %s' % now)
                     print('IP is %s' % self.myip)
                 time.sleep(self.iptime)
 
@@ -60,7 +71,7 @@ class DDNS():
 
             request = 'https://%s@%s/nic/update?hostname=%s&myip=%s' % (user, self.dip, domain, self.myip)
 
-            if self.myip != '':
+            if self.myip != self.lastip or self.first:
                 response = requests.get(request).text
                 if response == "good %s" % self.myip:
                     print('Changed IP on %s' % domain)
@@ -68,8 +79,6 @@ class DDNS():
                     print('No changes on %s' % domain)
                 else:
                     print("Error on %s:\n%s" % (domain, response))
-            else:
-                print('No changes on %s' % domain)
 
     def request_ip(self):
         if self.iperror == 1:
@@ -77,7 +86,7 @@ class DDNS():
         elif self.iperror == 2:
             ipr = self.ipr3
         else:
-            ipr = self.ipr
+            ipr = self.ipr1
         try:
             reqip = requests.get(ipr).text
         except:
@@ -85,5 +94,6 @@ class DDNS():
                 self.iperror = 0
             else:
                 self.iperror += 1
-            reqip = 'request error\nChanging api'
+            print('Request error\nChanging api')
+            reqip = self.myip
         return reqip
